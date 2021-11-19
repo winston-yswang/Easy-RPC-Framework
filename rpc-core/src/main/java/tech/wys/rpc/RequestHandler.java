@@ -1,4 +1,4 @@
-package tech.wys.rpc.server;
+package tech.wys.rpc;
 
 
 import org.slf4j.Logger;
@@ -23,10 +23,8 @@ public class RequestHandler {
         Object result = null;
         try {
             result = invokeTargetMethod(rpcRequest, service);
-            logger.info("服务：{} 成功调用方法：{}", rpcRequest.getInterfaceName(), rpcRequest.getMethodName());
-        } catch (InvocationTargetException e) {
-            logger.error("调用或发送时有错误发生：", e);
-        } catch (IllegalAccessException e) {
+            logger.info("服务:{} 成功调用方法:{}", rpcRequest.getInterfaceName(), rpcRequest.getMethodName());
+        } catch (IllegalAccessException | InvocationTargetException e) {
             logger.error("调用或发送时有错误发生：", e);
         }
         return result;
@@ -42,7 +40,7 @@ public class RequestHandler {
         try {
             method = service.getClass().getMethod(rpcRequest.getMethodName(), rpcRequest.getParamTypes());
         } catch (NoSuchMethodException e) {
-            return RpcResponse.fail(ResponseCode.METHOD_NOT_FOUND);
+            return RpcResponse.fail(ResponseCode.METHOD_NOT_FOUND, rpcRequest.getRequestId());
         }
         return method.invoke(service, rpcRequest.getParameters());  // 服务实体执行方法，并返回结果
     }

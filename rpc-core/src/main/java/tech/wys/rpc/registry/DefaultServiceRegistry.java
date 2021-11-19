@@ -20,8 +20,8 @@ public class DefaultServiceRegistry implements ServiceRegistry{
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultServiceRegistry.class);
 
-    private final Map<String, Object> serviceMap = new ConcurrentHashMap<>();   // 服务接口名与服务实体的映射
-    private final Set<String> registeredService = ConcurrentHashMap.newKeySet();    // 已经注册的服务
+    private static final Map<String, Object> serviceMap = new ConcurrentHashMap<>();   // 服务接口名与服务实体的映射
+    private static final Set<String> registeredService = ConcurrentHashMap.newKeySet();    // 已经注册的服务
 
 
     /**
