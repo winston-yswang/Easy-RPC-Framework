@@ -58,9 +58,7 @@ public class NettyClient implements RpcClient {
         this(DEFAULT_SERIALIZER, loadBalancer);
     }
 
-    public NettyClient(Integer serializer) {
-        this(serializer, new RandomLoadBalancer());
-    }
+    public NettyClient(Integer serializer) { this(serializer, new RandomLoadBalancer()); }
 
     public NettyClient(Integer serializer, LoadBalancer loadBalancer) {
         this.serviceDiscovery = new NacosServiceDiscovery(loadBalancer);

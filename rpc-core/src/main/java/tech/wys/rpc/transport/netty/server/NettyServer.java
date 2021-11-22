@@ -14,11 +14,13 @@ import tech.wys.rpc.codec.CommonDecoder;
 import tech.wys.rpc.codec.CommonEncoder;
 import tech.wys.rpc.enumeration.RpcError;
 import tech.wys.rpc.exception.RpcException;
+import tech.wys.rpc.hook.ShutdownHook;
 import tech.wys.rpc.provider.ServiceProvider;
 import tech.wys.rpc.provider.ServiceProviderImpl;
 import tech.wys.rpc.registry.NacosServiceRegistry;
 import tech.wys.rpc.registry.ServiceRegistry;
 import tech.wys.rpc.serializer.CommonSerializer;
+import tech.wys.rpc.transport.AbstractRpcServer;
 import tech.wys.rpc.transport.RpcServer;
 
 import java.net.InetSocketAddress;
@@ -30,15 +32,7 @@ import java.util.concurrent.TimeUnit;
  * @Desc: NIO方式服务提供侧
  * @Date: 2021/11/20
 **/
-public class NettyServer implements RpcServer {
-
-    private static final Logger logger = LoggerFactory.getLogger(NettyServer.class);
-
-    private final String host;
-    private final int port;
-
-    private final ServiceRegistry serviceRegistry;
-    private final ServiceProvider serviceProvider;
+public class NettyServer extends AbstractRpcServer {
 
     private final CommonSerializer serializer;
 
@@ -49,26 +43,17 @@ public class NettyServer implements RpcServer {
     public NettyServer(String host, int port, Integer serializer) {
         this.host = host;
         this.port = port;
-        this.serviceRegistry = new NacosServiceRegistry();
-        this.serviceProvider = new ServiceProviderImpl();
+        serviceRegistry = new NacosServiceRegistry();
+        serviceProvider = new ServiceProviderImpl();
         this.serializer = CommonSerializer.getByCode(serializer);
+        scanServices();
     }
 
-    @Override
-    public <T> void publishService(T service, Class<T> serviceClass) {
-        if(serializer == null) {
-            logger.error("未设置序列化器");
-            throw new RpcException(RpcError.SERIALIZER_NOT_FOUND);
-        }
-        serviceProvider.addServiceProvider(service, serviceClass);
-        serviceRegistry.register(serviceClass.getCanonicalName(), new InetSocketAddress(host, port));
-        start();
-    }
 
 
     @Override
     public void start() {
-
+        ShutdownHook.getShutdownHook().addClearAllHook();
         // 创建两个线程组 bossGroup 和 workerGroup
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -100,6 +85,7 @@ public class NettyServer implements RpcServer {
             ChannelFuture future = serverBootstrap.bind(port).sync();
             //对关闭通道进行监听
             future.channel().closeFuture().sync();
+
         } catch (InterruptedException e) {
             logger.error("启动服务器时有错误发送：", e);
         } finally {

@@ -13,7 +13,7 @@ public interface ServiceRegistry {
     /**
      * @Desc: 将一个服务注册进注册表
      * @Param: serviceName 服务名称
-     * @return: inetSocketAddress 提供服务的地址
+     * @Param: inetSocketAddress 提供服务的地址
     **/
     void register(String serviceName, InetSocketAddress inetSocketAddress);
 

@@ -2,6 +2,7 @@ package tech.wys.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tech.wys.rpc.annotation.Service;
 import tech.wys.rpc.api.HelloObject;
 import tech.wys.rpc.api.HelloService;
 
@@ -11,6 +12,7 @@ import tech.wys.rpc.api.HelloService;
  * @Desc: HelloService接口的实现类
  * @Date: 2021/11/16
 **/
+@Service
 public class HelloServiceImpl implements HelloService {
 
     private static final Logger logger = LoggerFactory.getLogger(HelloServiceImpl.class);

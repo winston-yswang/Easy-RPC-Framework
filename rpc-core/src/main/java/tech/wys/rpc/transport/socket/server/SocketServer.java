@@ -1,19 +1,13 @@
 package tech.wys.rpc.transport.socket.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import tech.wys.rpc.enumeration.RpcError;
-import tech.wys.rpc.exception.RpcException;
 import tech.wys.rpc.factory.ThreadPoolFactory;
 import tech.wys.rpc.handler.RequestHandler;
 import tech.wys.rpc.hook.ShutdownHook;
-import tech.wys.rpc.provider.ServiceProvider;
 import tech.wys.rpc.provider.ServiceProviderImpl;
 import tech.wys.rpc.registry.NacosServiceRegistry;
-import tech.wys.rpc.registry.ServiceRegistry;
 import tech.wys.rpc.serializer.CommonSerializer;
+import tech.wys.rpc.transport.AbstractRpcServer;
 import tech.wys.rpc.transport.RpcServer;
-
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -26,18 +20,11 @@ import java.util.concurrent.ExecutorService;
  *
  * @author ziyang
  */
-public class SocketServer implements RpcServer {
+public class SocketServer extends AbstractRpcServer {
 
-    private static final Logger logger = LoggerFactory.getLogger(SocketServer.class);
-
-    private final ExecutorService threadPool;;
-    private final String host;
-    private final int port;
+    private final ExecutorService threadPool;
     private final CommonSerializer serializer;
     private final RequestHandler requestHandler = new RequestHandler();
-
-    private final ServiceRegistry serviceRegistry;
-    private final ServiceProvider serviceProvider;
 
     public SocketServer(String host, int port) {
         this(host, port, DEFAULT_SERIALIZER);
@@ -50,17 +37,7 @@ public class SocketServer implements RpcServer {
         this.serviceRegistry = new NacosServiceRegistry();
         this.serviceProvider = new ServiceProviderImpl();
         this.serializer = CommonSerializer.getByCode(serializer);
-    }
-
-    @Override
-    public <T> void publishService(T service, Class<T> serviceClass) {
-        if(serializer == null) {
-            logger.error("未设置序列化器");
-            throw new RpcException(RpcError.SERIALIZER_NOT_FOUND);
-        }
-        serviceProvider.addServiceProvider(service, serviceClass);
-        serviceRegistry.register(serviceClass.getCanonicalName(), new InetSocketAddress(host, port));
-        start();
+        scanServices();
     }
 
     @Override

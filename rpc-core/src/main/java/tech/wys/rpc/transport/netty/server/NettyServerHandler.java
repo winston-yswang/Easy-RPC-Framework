@@ -30,7 +30,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcRequest msg) throws Exception {
         try {
-            if (msg.getHeartBeat()) {
+            if (msg.getHeartBeat()) {   // 判断是否是心跳包
                 logger.info("接收到客户端心跳包...");
                 return;
             }

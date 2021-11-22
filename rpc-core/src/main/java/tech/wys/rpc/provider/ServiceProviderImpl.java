@@ -22,8 +22,7 @@ public class ServiceProviderImpl implements ServiceProvider {
     private static final Map<String, Object> serviceMap = new ConcurrentHashMap<>();    // 服务接口名与服务实体的映射
     private static final Set<String> registeredService = ConcurrentHashMap.newKeySet(); // 已经注册的服务
     @Override
-    public <T> void addServiceProvider(T service, Class<T> serviceClass) {
-        String serviceName = serviceClass.getCanonicalName();   // 返回service的包含路径类名
+    public <T> void addServiceProvider(T service, String serviceName) {
         if (registeredService.contains(serviceName)) return;    // 已经注册过该服务
         registeredService.add(serviceName); // 新服务开始注册流程
         serviceMap.put(serviceName, service);
