@@ -1,56 +1,70 @@
-package tech.wys.rpc.socket.client;
-
+package tech.wys.rpc.transport.socket.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tech.wys.rpc.RpcClient;
 import tech.wys.rpc.entity.RpcRequest;
 import tech.wys.rpc.entity.RpcResponse;
 import tech.wys.rpc.enumeration.ResponseCode;
 import tech.wys.rpc.enumeration.RpcError;
 import tech.wys.rpc.exception.RpcException;
+import tech.wys.rpc.loadBalancer.LoadBalancer;
+import tech.wys.rpc.loadBalancer.RandomLoadBalancer;
+import tech.wys.rpc.registry.NacosServiceDiscovery;
+import tech.wys.rpc.registry.ServiceDiscovery;
 import tech.wys.rpc.serializer.CommonSerializer;
-import tech.wys.rpc.socket.server.SocketServer;
-import tech.wys.rpc.socket.util.ObjectReader;
-import tech.wys.rpc.socket.util.ObjectWriter;
+import tech.wys.rpc.transport.RpcClient;
+import tech.wys.rpc.transport.socket.util.ObjectReader;
+import tech.wys.rpc.transport.socket.util.ObjectWriter;
 import tech.wys.rpc.util.RpcMessageChecker;
+
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
- * @Author: wys
- * @Desc: Socket方式远程方法调用的消费者（客户端）
- * @Date: 2021/11/19
-**/ 
+ * Socket方式远程方法调用的消费者（客户端）
+ *
+ * @author ziyang
+ */
 public class SocketClient implements RpcClient {
 
     private static final Logger logger = LoggerFactory.getLogger(SocketClient.class);
 
-    private final String host;
-    private final int port;
+    private final ServiceDiscovery serviceDiscovery;
 
-    private CommonSerializer serializer;
+    private final CommonSerializer serializer;
 
-    public SocketClient(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public SocketClient() {
+        this(DEFAULT_SERIALIZER, new RandomLoadBalancer());
+    }
+    public SocketClient(LoadBalancer loadBalancer) {
+        this(DEFAULT_SERIALIZER, loadBalancer);
+    }
+    public SocketClient(Integer serializer) {
+        this(serializer, new RandomLoadBalancer());
+    }
+
+    public SocketClient(Integer serializer, LoadBalancer loadBalancer) {
+        this.serviceDiscovery = new NacosServiceDiscovery(loadBalancer);
+        this.serializer = CommonSerializer.getByCode(serializer);
     }
 
     @Override
     public Object sendRequest(RpcRequest rpcRequest) {
-        if (serializer == null) {
+        if(serializer == null) {
             logger.error("未设置序列化器");
             throw new RpcException(RpcError.SERIALIZER_NOT_FOUND);
         }
-        try (Socket socket = new Socket(host, port)) {
+        InetSocketAddress inetSocketAddress = serviceDiscovery.lookupService(rpcRequest.getInterfaceName());
+        try (Socket socket = new Socket()) {
+            socket.connect(inetSocketAddress);
             OutputStream outputStream = socket.getOutputStream();
             InputStream inputStream = socket.getInputStream();
-            ObjectWriter.writeObject(outputStream, rpcRequest, serializer); // 对rpcRequest序列化并发送
-
-            Object obj = ObjectReader.readObject(inputStream);  // 接受服务端返回的数据
+            ObjectWriter.writeObject(outputStream, rpcRequest, serializer);
+            Object obj = ObjectReader.readObject(inputStream);
             RpcResponse rpcResponse = (RpcResponse) obj;
             if (rpcResponse == null) {
                 logger.error("服务调用失败，service：{}", rpcRequest.getInterfaceName());
@@ -61,16 +75,10 @@ public class SocketClient implements RpcClient {
                 throw new RpcException(RpcError.SERVICE_INVOCATION_FAILURE, " service:" + rpcRequest.getInterfaceName());
             }
             RpcMessageChecker.check(rpcRequest, rpcResponse);
-            return rpcResponse.getData();
-
+            return rpcResponse;
         } catch (IOException e) {
             logger.error("调用时有错误发生：", e);
             throw new RpcException("服务调用失败: ", e);
         }
-    }
-
-    @Override
-    public void setSerializer(CommonSerializer serializer) {
-        this.serializer = serializer;
     }
 }

@@ -1,14 +1,12 @@
 package tech.wys.test;
 
 
-import tech.wys.rpc.RpcClient;
-import tech.wys.rpc.RpcClientProxy;
 import tech.wys.rpc.api.HelloObject;
 import tech.wys.rpc.api.HelloService;
-import tech.wys.rpc.netty.client.NettyClient;
-import tech.wys.rpc.serializer.HessianSerializer;
-import tech.wys.rpc.serializer.JsonSerializer;
-import tech.wys.rpc.serializer.KryoSerializer;
+import tech.wys.rpc.serializer.CommonSerializer;
+import tech.wys.rpc.transport.RpcClient;
+import tech.wys.rpc.transport.RpcClientProxy;
+import tech.wys.rpc.transport.netty.client.NettyClient;
 
 /**
  * @Author: wys
@@ -18,14 +16,12 @@ import tech.wys.rpc.serializer.KryoSerializer;
 public class NettyTestClient {
 
     public static void main(String[] args) {
-        RpcClient client = new NettyClient("127.0.0.1", 9999);
-        client.setSerializer(new JsonSerializer());
+        NettyClient client = new NettyClient(CommonSerializer.HESSIAN_SERIALIZER);
         RpcClientProxy rpcClientProxy = new RpcClientProxy(client);
         HelloService helloService = rpcClientProxy.getProxy(HelloService.class);
         HelloObject object = new HelloObject(12, "This is a message");
         String res = helloService.hello(object);
         System.out.println(res);
-
 
     }
 }

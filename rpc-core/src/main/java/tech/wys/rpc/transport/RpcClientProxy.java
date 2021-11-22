@@ -1,13 +1,19 @@
-package tech.wys.rpc;
+package tech.wys.rpc.transport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.wys.rpc.entity.RpcRequest;
+import tech.wys.rpc.entity.RpcResponse;
+import tech.wys.rpc.transport.netty.client.NettyClient;
+import tech.wys.rpc.transport.socket.client.SocketClient;
+import tech.wys.rpc.util.RpcMessageChecker;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class RpcClientProxy implements InvocationHandler {
 
@@ -32,9 +38,23 @@ public class RpcClientProxy implements InvocationHandler {
                 .methodName(method.getName())
                 .paramTypes(method.getParameterTypes())
                 .parameters(args)
+                .heartBeat(false)
                 .build();
 
-        // 代理对象远程调用服务返回结果
-        return client.sendRequest(rpcRequest);
+        RpcResponse rpcResponse = null;
+        if (client instanceof NettyClient) {
+            CompletableFuture<RpcResponse> completableFuture = (CompletableFuture<RpcResponse>) client.sendRequest(rpcRequest);
+            try {
+                rpcResponse = completableFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                logger.error("方法调用请求发送失败", e);
+                return null;
+            }
+        }
+        if (client instanceof SocketClient) {
+            rpcResponse = (RpcResponse) client.sendRequest(rpcRequest);
+        }
+        RpcMessageChecker.check(rpcRequest, rpcResponse);
+        return rpcResponse.getData();   // 代理对象远程调用服务返回结果
     }
 }

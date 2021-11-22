@@ -1,11 +1,9 @@
 package tech.wys.test;
 
 
-import tech.wys.rpc.netty.server.NettyServer;
-import tech.wys.rpc.registry.DefaultServiceRegistry;
-import tech.wys.rpc.serializer.HessianSerializer;
-import tech.wys.rpc.serializer.JsonSerializer;
-import tech.wys.rpc.serializer.KryoSerializer;
+import tech.wys.rpc.api.HelloService;
+import tech.wys.rpc.serializer.CommonSerializer;
+import tech.wys.rpc.transport.netty.server.NettyServer;
 
 /**
  * @Author: wys
@@ -16,10 +14,8 @@ public class NettyTestServer {
 
     public static void main(String[] args) {
         HelloServiceImpl helloService = new HelloServiceImpl();
-        DefaultServiceRegistry registry = new DefaultServiceRegistry();
-        registry.register(helloService);
-        NettyServer server = new NettyServer();
-        server.setSerializer(new JsonSerializer());
-        server.start(9999);
+        NettyServer server = new NettyServer("127.0.0.1", 9999, CommonSerializer.HESSIAN_SERIALIZER);
+        server.publishService(helloService, HelloService.class);
+
     }
 }

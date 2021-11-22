@@ -1,5 +1,4 @@
-package tech.wys.rpc.socket.util;
-
+package tech.wys.rpc.transport.socket.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,20 +9,20 @@ import tech.wys.rpc.enumeration.RpcError;
 import tech.wys.rpc.exception.RpcException;
 import tech.wys.rpc.serializer.CommonSerializer;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * @Author: wys
- * @Desc: Socket方式从输入流中读取字节并反序列化
- * @Date: 2021/11/19
-**/ 
+ * Socket方式从输入流中读取字节并反序列化
+ * @author ziyang
+ */
 public class ObjectReader {
 
     private static final Logger logger = LoggerFactory.getLogger(ObjectReader.class);
     private static final int MAGIC_NUMBER = 0xCAFEBABE;
 
-    public static Object readObject(InputStream in) throws IOException {
+    public static Object readObject(InputStream in) throws IOException, RpcException {
         byte[] numberBytes = new byte[4];
         in.read(numberBytes);
         int magic = bytesToInt(numberBytes);
@@ -58,10 +57,10 @@ public class ObjectReader {
 
     public static int bytesToInt(byte[] src) {
         int value;
-        value = (src[0] & 0xFF)
-                | ((src[1] & 0xFF)<<8)
-                | ((src[2] & 0xFF)<<16)
-                | ((src[3] & 0xFF)<<24);
+        value = ((src[0] & 0xFF)<<24)
+                |((src[1] & 0xFF)<<16)
+                |((src[2] & 0xFF)<<8)
+                |(src[3] & 0xFF);
         return value;
     }
 

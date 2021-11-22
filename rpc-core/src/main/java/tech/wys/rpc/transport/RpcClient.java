@@ -1,17 +1,12 @@
-package tech.wys.rpc;
+package tech.wys.rpc.transport;
 
 import tech.wys.rpc.entity.RpcRequest;
 import tech.wys.rpc.serializer.CommonSerializer;
 
-
-/**
- * @Author: wys
- * @Desc: 客户端类通用接口
- * @Date: 2021/11/16
-**/ 
 public interface RpcClient {
+
+    int DEFAULT_SERIALIZER = CommonSerializer.KRYO_SERIALIZER;
 
     Object sendRequest(RpcRequest rpcRequest);
 
-    void setSerializer(CommonSerializer serializer);
 }
